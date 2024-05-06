@@ -1,0 +1,369 @@
+#Importing Libraries
+
+import pandas as pd
+import os
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+​
+#Data Loading
+
+# Change directory to where your CSV files are located
+os.chdir("/Users/madhurachaudhari/Desktop/archive-5")
+​
+# Create an empty list to store DataFrames
+dfs = []
+​
+# Iterate through each file in the directory
+for file in os.listdir():
+    if file.endswith('.csv'):
+        # Read the CSV file and append to the list
+        df_temp = pd.read_csv(file)
+        print(f"Appending file: {file}")
+        dfs.append(df_temp)
+​
+# Concatenate all DataFrames in the list
+df = pd.concat(dfs, ignore_index=True)
+
+#View of Data
+
+df
+
+#Information of the Data
+
+df.info()
+
+import matplotlib.pyplot as plt
+
+# Get the number of rows and columns
+num_rows = df.shape[0]
+num_columns = df.shape[1]
+
+# Plot the number of rows and columns
+plt.figure(figsize=(8, 6))
+bars = plt.bar(['Rows', 'Columns'], [num_rows, num_columns], color=['blue', 'green'])
+plt.title('Number of Rows and Columns in DataFrame')
+plt.xlabel('Dimension')
+plt.ylabel('Count')
+
+# Add labels to the bars
+for bar in bars:
+    yval = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 2), va='bottom')
+
+plt.show()
+
+#Data Cleaning
+
+# Calculate the number of null values in each column
+null_counts = df.isnull().sum()
+​
+# Plot the number of null values
+plt.figure(figsize=(10, 6))
+bars = plt.bar(null_counts.index, null_counts.values, color='skyblue')
+plt.title('Number of Null Values in Each Column')
+plt.xlabel('Columns')
+plt.ylabel('Null Count')
+plt.xticks(rotation=90)  # Rotate x-axis labels for better readability
+​
+# Add labels to the bars
+for bar in bars:
+    yval = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 2), va='bottom')
+​
+plt.show()
+
+#Remove the Column with high null values
+
+# Remove the 'Context' column
+df.drop('Context', axis=1, inplace=True)
+
+#Remove the Rows with Null values
+
+# Remove rows with null values
+df.dropna(axis=0, inplace=True)
+​
+
+# Calculate the number of null values in each column
+null_counts = df.isnull().sum()
+​
+# Plot the number of null values
+plt.figure(figsize=(10, 6))
+bars = plt.bar(null_counts.index, null_counts.values, color='skyblue')
+plt.title('Number of Null Values in Each Column After Cleaning')
+plt.xlabel('Columns')
+plt.ylabel('Null Count')
+plt.xticks(rotation=90)  # Rotate x-axis labels for better readability
+​
+# Add labels to the bars
+for bar in bars:
+    yval = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 2), va='bottom')
+​
+plt.show()
+
+#Data Preprocessing
+
+df.info()
+
+#Remove unnecessary column
+
+# Remove the 'Crime ID' column
+df.drop('Crime ID', axis=1, inplace=True)
+
+#Conversion of Data type of integer columns
+
+# Convert Longitude and Latitude columns to int64
+df['Longitude'] = df['Longitude'].astype('int64')
+df['Latitude'] = df['Latitude'].astype('int64')
+​
+df.info()
+
+#Creating Location Type Column
+
+# Creating a new column for location type
+df['Location_Type'] = df['Location'].apply(lambda x: x.split(' ')[-1])
+​
+# Calculating distance from a central point
+central_longitude = 0
+central_latitude = 0
+df['Distance_from_Center'] = ((df['Longitude'] - central_longitude)**2 + (df['Latitude'] - central_latitude)**2)**0.5
+​
+df['Distance_from_Center']
+
+#Creating Crime Frequency Colum
+
+# Creating a new column for crime type frequency
+crime_type_freq = df['Crime type'].value_counts()
+df['Crime_Type_Frequency'] = df['Crime type'].map(crime_type_freq)
+df['Crime_Type_Frequency']
+
+df.info()
+
+#Unqiue Values in each column
+
+# Print unique values in each column before encoding
+print("Unique values in each column before encoding:")
+print(df.nunique())
+
+#Label Encoding the Categorical Features
+
+# Get unique values of 'Crime type' before encoding
+unique_crime_types = df['Crime type'].unique()
+​
+​
+# Encode categorical variables using LabelEncoder
+label_encoder = LabelEncoder()
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col] = label_encoder.fit_transform(df[col])
+​
+​
+# Encode 'Crime type'
+encoded_crime_types = label_encoder.fit_transform(unique_crime_types)
+​
+# Create a dictionary to map encoded values to crime types
+crime_type_mapping = dict(zip(encoded_crime_types, unique_crime_types))
+​
+# Print crime type against their encoded values
+print("Encoded Value\tCrime Type")
+for encoded_value, crime_type in crime_type_mapping.items():
+    print(f"{encoded_value}\t\t{crime_type}")
+
+#Final Data Frame
+
+df
+
+#Splitting into features (X) and target variable (y)
+
+X = df.drop('Crime type', axis=1)  # Features
+y = df['Crime type']  # Target variable
+
+#Perform train-test split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+​
+# Check the shapes of the resulting sets
+print("X_trainshape:", X_train.shape)
+print("X_test shape:", X_test.shape)
+print("y_train shape:", y_train.shape)
+print("y_test shape:", y_test.shape)
+
+#Checking Class Imbalance Distribution
+
+# Count occurrences of each class label in y_train and y_test
+train_class_counts = y_train.value_counts()
+test_class_counts = y_test.value_counts()
+​
+print("Train Class Counts:")
+print(train_class_counts)
+​
+print("\nTest Class Counts:")
+print(test_class_counts)
+​
+#SMOTE: Balancing the Training Data
+
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+​
+# Initialize StandardScaler
+scaler = StandardScaler()
+​
+# Fit and transform the training set
+X_train_scaled = scaler.fit_transform(X_train)
+​
+# Apply SMOTE to the scaled training set
+smote = SMOTE()
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train_scaled, y_train)
+​
+# Transform the test set using the same scaler
+X_test_scaled = scaler.transform(X_test)
+​
+​
+X_test_resampled = X_test_scaled
+y_test_resampled = y_test
+​
+# Check the shape of the resampled datasets
+print("Shape of X_train_resampled:", X_train_resampled.shape)
+print("Shape of y_train_resampled:", y_train_resampled.shape)
+print("Shape of X_test_resampled:", X_test_resampled.shape)
+print("Shape of y_test_resampled:", y_test_resampled.shape)
+​
+#Counts of Balanced Dataset Classes
+
+# Count occurrences of each class label in y_train_resampled and y_test_resampled
+train_resampled_class_counts = pd.Series(y_train_resampled).value_counts()
+test_resampled_class_counts = pd.Series(y_test_resampled).value_counts()
+​
+print("Train Resampled Class Counts:")
+print(train_resampled_class_counts)
+​
+print("\nTest Resampled Class Counts:")
+print(test_resampled_class_counts)
+​
+#​Standarized Data for Training and Testing
+
+X_train_resampled
+​
+X_test_resampled
+
+# Initialize the Decision Tree classifier
+decision_tree = DecisionTreeClassifier(random_state=42)
+
+# Train the model on the resampled training data
+decision_tree.fit(X_train_resampled, y_train_resampled)
+
+# Predict on the test set
+y_pred = decision_tree.predict(X_test_scaled)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+# Initialize the Random Forest classifier
+random_forest = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Train the model on the resampled training data
+random_forest.fit(X_train_resampled, y_train_resampled)
+
+# Predict on the test set
+y_pred = random_forest.predict(X_test_scaled)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+y_pred = random_forest.predict(X_test_resampled)
+
+# Print classification report
+print("Classification Report of Random Forest:")
+print(classification_report(y_test_resampled, y_pred))
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
+
+# Calculate the confusion matrix
+conf_matrix = confusion_matrix(y_test_resampled, y_pred)
+
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False)
+plt.title('Confusion Matrix for Random Forest')
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.show()
+
+
+# Initialize the KNN classifier
+knn = KNeighborsClassifier(n_neighbors=5)  # You can adjust the number of neighbors as needed
+
+# Train the model on the resampled training data
+knn.fit(X_train_resampled, y_train_resampled)
+
+# Predict on the test set
+y_pred = knn.predict(X_test_scaled)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+from sklearn.neighbors import KNeighborsClassifier
+
+knn_classifier = KNeighborsClassifier()
+
+# Train the model on the resampled training data
+knn_classifier.fit(X_train_resampled, y_train_resampled)
+
+# Predict on the test set
+y_pred_knn = knn_classifier.predict(X_test_scaled)
+
+classification_report_knn = classification_report(y_test, y_pred_knn)
+print("Classification Report of KNN:")
+print(classification_report_knn)
+
+conf_matrix_knn = confusion_matrix(y_test, y_pred_knn)
+
+# Plot the confusion matrix for KNN
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix_knn, annot=True, fmt='d', cmap='Blues', cbar=False)
+plt.title('Confusion Matrix for KNN')
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.show()
+
+# Initialize the Logistic Regression classifier
+logistic_regression = LogisticRegression(random_state=42)
+
+# Train the model on the resampled training data
+logistic_regression.fit(X_train_resampled, y_train_resampled)
+
+# Predict on the test set
+y_pred = logistic_regression.predict(X_test_scaled)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+y_pred = logistic_regression.predict(X_test_scaled)
+
+# Generate classification report
+report = classification_report(y_test, y_pred)
+
+# Print classification report
+print("Classification Report of Logistic Regression:")
+print(report)
+
+conf_matrix_lr = confusion_matrix(y_test, y_pred)
+
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix_lr, annot=True, fmt='d', cmap='Blues', cbar=False)
+plt.title('Confusion Matrix for Logistic Regression')
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.show()
