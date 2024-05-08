@@ -367,3 +367,134 @@ plt.title('Confusion Matrix for Logistic Regression')
 plt.xlabel('Predicted Labels')
 plt.ylabel('True Labels')
 plt.show()
+
+#BAR GRAPH OF DISTRIBUTION OF CRIME TYPES
+
+import matplotlib.pyplot as plt
+
+# Calculate the count of each crime type
+crime_type_counts = df['Crime type'].value_counts()
+
+# Plotting the bar graph
+plt.figure(figsize=(10, 6))
+crime_type_counts.plot(kind='bar', color='skyblue')
+plt.title('Distribution of Crime Types')
+plt.xlabel('Crime Type')
+plt.ylabel('Count')
+plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better readability
+plt.tight_layout()  # Adjust layout to prevent clipping of labels
+plt.show()
+
+#COMPARISON OF MODEL ACCURACY SCORES
+
+import matplotlib.pyplot as plt
+
+# Model names
+model_names = ['Decision Tree', 'Random Forest', 'KNN', 'Logistic Regression']
+
+# Predictions from different models
+y_pred_dt = decision_tree.predict(X_test_scaled)
+y_pred_rf = random_forest.predict(X_test_scaled)
+y_pred_knn = knn.predict(X_test_scaled)
+y_pred_lr = logistic_regression.predict(X_test_scaled)
+
+# Accuracy scores of different models
+accuracy_scores = [
+    accuracy_score(y_test, y_pred_dt),
+    accuracy_score(y_test, y_pred_rf),
+    accuracy_score(y_test, y_pred_knn),
+    accuracy_score(y_test, y_pred_lr)
+]
+
+# Plotting the accuracy scores of different models
+plt.figure(figsize=(10, 6))
+plt.bar(model_names, accuracy_scores, color=['blue', 'green', 'orange', 'red'])
+plt.title('Comparison of Model Accuracy Scores')
+plt.xlabel('Model')
+plt.ylabel('Accuracy Score')
+plt.ylim(0, 1)  # Set y-axis limit from 0 to 1
+plt.show()
+
+#BAR GRAPHS OF CLASS DISTRIBUTION
+
+import matplotlib.pyplot as plt
+
+# Plotting the class distribution before and after resampling
+plt.figure(figsize=(10, 6))
+plt.subplot(2, 1, 1)
+train_class_counts.plot(kind='bar', color='skyblue')
+plt.title('Class Distribution Before Resampling')
+plt.xlabel('Class Label')
+plt.ylabel('Count')
+plt.subplot(2, 1, 2)
+train_resampled_class_counts.plot(kind='bar', color='green')
+plt.title('Class Distribution After Resampling')
+plt.xlabel('Class Label')
+plt.ylabel('Count')
+plt.tight_layout()
+plt.show()
+
+#GRAPHS FOR MODEL TRAINING TIME, MODEL EVALUATION TIME AND MODEL MEMORY USAGE
+import time
+
+start_time = time.time()
+# Your model training code here
+end_time = time.time()
+
+training_time = end_time - start_time
+
+import time
+
+start_time = time.time()
+# Your model evaluation code here
+end_time = time.time()
+
+evaluation_time = end_time - start_time
+
+import psutil
+
+# Get the current process's memory usage
+process = psutil.Process(os.getpid())
+memory_usage = process.memory_info().rss / 1024 / 1024  # Convert to MB
+
+import matplotlib.pyplot as plt
+
+# Model names
+model_names = ['Decision Tree', 'Random Forest', 'KNN', 'Logistic Regression']
+
+# Model training times (replace these values with actual training times)
+training_times = [10, 15, 8, 12]  # Example values in seconds
+
+# Model evaluation times (replace these values with actual evaluation times)
+evaluation_times = [5, 7, 3, 6]  # Example values in seconds
+
+# Model memory usage (replace these values with actual memory usage)
+memory_usage = [100, 150, 80, 120]  # Example values in MB
+
+# Plotting the comparison of model training times
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 3, 1)
+plt.bar(model_names, training_times, color='skyblue')
+plt.title('Model Training Time')
+plt.xlabel('Model')
+plt.ylabel('Time (seconds)')
+plt.xticks(rotation=45)
+
+# Plotting the comparison of model evaluation times
+plt.subplot(1, 3, 2)
+plt.bar(model_names, evaluation_times, color='green')
+plt.title('Model Evaluation Time')
+plt.xlabel('Model')
+plt.ylabel('Time (seconds)')
+plt.xticks(rotation=45)
+
+# Plotting the comparison of model memory usage
+plt.subplot(1, 3, 3)
+plt.bar(model_names, memory_usage, color='orange')
+plt.title('Model Memory Usage')
+plt.xlabel('Model')
+plt.ylabel('Memory (MB)')
+plt.xticks(rotation=45)
+
+plt.tight_layout()
+plt.show()
